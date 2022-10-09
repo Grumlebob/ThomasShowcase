@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package protos;
-option go_package = "https://github.com/Grumlebob/Assignment3ChittyChat/tree/master/protos";
+option go_package = "https://github.com/Grumlebob/ThomasShowcase/tree/master/protos";
 
 
 //Important commands:
@@ -20,22 +20,9 @@ option go_package = "https://github.com/Grumlebob/Assignment3ChittyChat/tree/mas
 
 //A bidirectional streaming RPC where both sides send a sequence of messages using a read-write stream. The two streams operate independently, so clients and servers can read and write in whatever order they like: for example, the server could wait to receive all the client messages before writing its responses, or it could alternately read a message then write a message, or some other combination of reads and writes. The order of messages in each stream is preserved
 service ChatService {
-    rpc GetClientId(ClientRequest) returns (ServerResponse) {}
-    rpc JoinChat(ClientRequest) returns (stream ChatMessage) {}
-    rpc LeaveChat(ClientRequest) returns (stream ServerResponse) {}
-    rpc PublishMessage(ClientRequest) returns (stream ServerResponse) {}
+    rpc PublishMessage(ChatMessage) returns (ChatMessage) {}
 }
 
 message ChatMessage {
     string message = 1;
-    int32 userid = 2;
-    int64 lamportTime = 3;
-}
-
-message ClientRequest {
-    ChatMessage chatMessage = 1;
-}
-
-message ServerResponse {
-    ChatMessage chatMessage = 1;
 }

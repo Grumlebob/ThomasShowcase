@@ -1,4 +1,4 @@
-module github.com/Grumlebob/Assignment3ChittyChat
+module github.com/Grumlebob/ThomasShowcase
 
 go 1.19
 

@@ -1,18 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"log"
-	"os"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "github.com/Grumlebob/Assignment3ChittyChat/protos"
+	pb "github.com/Grumlebob/ThomasShowcase/protos"
 )
 
 var userId int32
@@ -32,95 +29,17 @@ func main() {
 	//  Create new Client from generated gRPC code from proto
 	client := pb.NewChatServiceClient(conn)
 
-	getClientId(client, context)
-	//Indsæt join chat methods
-
-	go joinChat(client, context)
-
-	sendMessage(client, context, "hello 1")
-	//sendMessage(client, context, "hello 2")
-	//sendMessage(client, context, "hello 3")
-
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		sendMessage(client, context, scanner.Text())
-	}
+	sendMsg(client, context)
 }
 
-func getClientId(client pb.ChatServiceClient, context context.Context) {
-	clientRequest := pb.ClientRequest{
-		ChatMessage: &pb.ChatMessage{
-			Message:     "New User",
-			Userid:      userId,
-			LamportTime: 0,
-		},
-	}
-	user, err := client.GetClientId(context, &clientRequest)
+func sendMsg(client pb.ChatServiceClient, context context.Context) {
+	msg := "hello boy"
+	chatMessage := &pb.ChatMessage{Message: msg}
+
+	user, err := client.PublishMessage(context, chatMessage)
 	if err != nil {
 		log.Fatalf("Error when calling server: %s", err)
 	}
+	fmt.Println("Response from server: ", user.Message)
 
-	userId = user.ChatMessage.Userid
-	fmt.Println("Hello! - You are ID: ", userId)
-}
-
-func joinChat(client pb.ChatServiceClient, context context.Context) {
-	clientRequest := pb.ClientRequest{
-		ChatMessage: &pb.ChatMessage{
-			Message:     "New User",
-			Userid:      userId,
-			LamportTime: 0,
-		},
-	}
-
-	stream, err := client.JoinChat(context, &clientRequest)
-	if err != nil {
-		log.Fatalf("Error when joining chat server: %s", err)
-	}
-	fmt.Println("User ", clientRequest.ChatMessage.Userid, " joined the chat")
-
-	//Keep them in chatroom until they leave.
-	loopForever := make(chan struct{})
-	go func() {
-		for {
-			message, err := stream.Recv()
-			if err == io.EOF {
-				close(loopForever)
-				return
-			}
-			if err != nil {
-				log.Fatalf("Failed to receive message from channel joining. \nErr: %v", err)
-			}
-			log.Println(message)
-		}
-	}()
-	<-loopForever
-
-}
-
-func sendMessage(client pb.ChatServiceClient, context context.Context, message string) {
-	fmt.Println("Client ", userId, " attempts to send message: ", message)
-
-	clientRequest := &pb.ClientRequest{
-		ChatMessage: &pb.ChatMessage{
-			Message:     message,
-			Userid:      userId,
-			LamportTime: 0,
-		},
-	}
-
-	stream, err := client.PublishMessage(context, clientRequest)
-	if err != nil {
-		log.Fatalf("Opening stream: %s", err)
-	}
-	for {
-		message, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatalf("%v.PublishMessage(_) = _, %v", client, err)
-		}
-		log.Println(message)
-	}
 }
